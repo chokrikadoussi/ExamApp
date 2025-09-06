@@ -1,6 +1,8 @@
 package com.chokri.controller;
 
 import com.chokri.model.Question;
+import com.chokri.model.QuestionNum;
+import com.chokri.model.QuestionText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,10 +23,24 @@ public class QuestionController {
         return instance;
     }
 
-    public void createQuestion(String title, String answer) {
-        // Logic to add a question
-        Question question = new Question(title, answer);
+    public void createTextQuestion(String title, String answer) {
+        Question question = new QuestionText(title, answer);
         this.questions.add(question);
+    }
+
+    public void createNumericQuestion(String title, String answer, String errorMargin) {
+        try {
+            double answerValue = Double.parseDouble(answer);
+            double marginValue = Double.parseDouble(errorMargin);
+            Question question = new QuestionNum(title, answerValue, marginValue);
+            this.questions.add(question);
+        } catch (NumberFormatException e) {
+            //TODO: log this exception properly
+            // Handle the case where the answer or margin is not a valid number.
+            // For now, we can show an error or log it.
+            System.err.println("Erreur de format numérique : " + e.getMessage());
+            // In a real app, you'd show a JOptionPane to the user.
+        }
     }
 
     public List<Question> getQuestions() {
