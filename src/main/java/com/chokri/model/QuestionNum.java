@@ -50,13 +50,10 @@ public class QuestionNum extends Question {
         }
     }
 
-    // TODO: revoir méthode toString
     @Override
     public String toString() {
-        return "QuestionNum{" +
-                "title='" + getTitle() + '\'' +
-                ", answer=" + answer +
-                ", marginOfError=" + marginOfError +
-                '}';
+        return "Titre Question : " + this.getTitle() + '\'' +
+                " | Bonne Réponse : " + this.getAnswer() + '\'' +
+                " | Marge d'Erreur : " + this.getMarginOfError();
     }
 }

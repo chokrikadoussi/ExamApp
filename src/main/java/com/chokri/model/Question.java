@@ -18,4 +18,7 @@ public abstract class Question {
 
     public abstract boolean checkAnswer(String userAnswer);
 
+    @Override
+    public abstract String toString();
+
 }

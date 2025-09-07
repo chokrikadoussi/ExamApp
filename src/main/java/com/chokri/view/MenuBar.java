@@ -8,12 +8,14 @@ public class MenuBar extends JMenuBar {
         JMenu menu = new JMenu("Navigation");
         add(menu);
 
-        JMenuItem homeItem = new JMenuItem("Home");
-        JMenuItem questionItem = new JMenuItem("Question");
-        JMenuItem answerItem = new JMenuItem("Réponse");
+        JMenuItem homeItem = new JMenuItem("Accueil");
+        JMenuItem questionItem = new JMenuItem("Questions");
+        JMenuItem quizItem = new JMenuItem("Quiz");
+        JMenuItem answerItem = new JMenuItem("Réponses");
 
         menu.add(homeItem);
         menu.add(questionItem);
+        menu.add(quizItem);
         menu.add(answerItem);
 
         homeItem.addActionListener(e -> {
@@ -30,6 +32,13 @@ public class MenuBar extends JMenuBar {
             }
         });
 
+        quizItem.addActionListener(e -> {
+            if (!(currentFrame instanceof QuizView)) {
+                currentFrame.dispose();
+                new QuizView().setVisible(true);
+            }
+        });
+
         answerItem.addActionListener(e -> {
             if (!(currentFrame instanceof AnswerView)) {
                 currentFrame.dispose();
@@ -38,4 +47,3 @@ public class MenuBar extends JMenuBar {
         });
     }
 }
-

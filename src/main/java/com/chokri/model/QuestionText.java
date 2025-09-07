@@ -24,5 +24,11 @@ public class QuestionText extends Question {
         }
         return this.answer.trim().equalsIgnoreCase(userAnswer.trim());
     }
+
+    @Override
+    public String toString() {
+        return "Titre Question : " + this.getTitle() + '\'' +
+                " | Bonne(s) Réponse(s) : '" + this.getAnswer();
+    }
 }
 
