@@ -2,15 +2,15 @@ package com.chokri.controller;
 
 import com.chokri.model.Quiz;
 import com.chokri.model.Question;
-import java.util.ArrayList;
+import com.chokri.service.QuizService;
 import java.util.List;
 
 public class QuizController {
     private static QuizController instance;
-    private final List<Quiz> quizzes;
+    private final QuizService quizService;
 
     private QuizController() {
-        this.quizzes = new ArrayList<>();
+        this.quizService = QuizService.getInstance();
     }
 
     public static QuizController getInstance() {
@@ -21,38 +21,26 @@ public class QuizController {
     }
 
     public Quiz createQuiz(String title, double coefficient) {
-        Quiz quiz = new Quiz(title, coefficient);
-        quizzes.add(quiz);
-        return quiz;
+        return quizService.createQuiz(title, coefficient);
     }
 
     public void addQuestionToQuiz(Quiz quiz, Question question) {
-        quiz.addQuestion(question);
-    }
-
-    public void removeQuestionFromQuiz(Quiz quiz, Question question) {
-        quiz.removeQuestion(question);
-    }
-
-    public void setQuizTimeLimit(Quiz quiz, int minutes) {
-        quiz.setTimeLimit(minutes);
+        quizService.addQuestionToQuiz(quiz, question);
     }
 
     public void publishQuiz(Quiz quiz) {
-        quiz.setPublished(true);
-    }
-
-    public List<Quiz> getAllQuizzes() {
-        return new ArrayList<>(quizzes);
-    }
-
-    public List<Quiz> getPublishedQuizzes() {
-        return quizzes.stream()
-                .filter(Quiz::isPublished)
-                .toList();
+        quizService.publishQuiz(quiz);
     }
 
     public void deleteQuiz(Quiz quiz) {
-        quizzes.remove(quiz);
+        quizService.deleteQuiz(quiz);
+    }
+
+    public List<Quiz> getAllQuizzes() {
+        return quizService.getAllQuizzes();
+    }
+
+    public List<Quiz> getPublishedQuizzes() {
+        return quizService.getPublishedQuizzes();
     }
 }
