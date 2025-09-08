@@ -1,5 +1,6 @@
 package com.chokri.view;
 
+import com.chokri.utils.SessionManager;
 import javax.swing.*;
 
 public class MenuBar extends JMenuBar {
@@ -9,40 +10,46 @@ public class MenuBar extends JMenuBar {
         add(menu);
 
         JMenuItem homeItem = new JMenuItem("Accueil");
-        JMenuItem questionItem = new JMenuItem("Questions");
-        JMenuItem quizItem = new JMenuItem("Quiz");
-        JMenuItem answerItem = new JMenuItem("Réponses");
-
         menu.add(homeItem);
-        menu.add(questionItem);
-        menu.add(quizItem);
-        menu.add(answerItem);
+
+        // Items spécifiques au rôle
+        if (SessionManager.getInstance().isTeacher()) {
+            // Menu du professeur
+            JMenuItem questionItem = new JMenuItem("Gérer les Questions");
+            JMenuItem quizItem = new JMenuItem("Gérer les Quiz");
+            menu.add(questionItem);
+            menu.add(quizItem);
+
+            questionItem.addActionListener(e -> {
+                if (!(currentFrame instanceof QuestionView)) {
+                    currentFrame.dispose();
+                    new QuestionView().setVisible(true);
+                }
+            });
+
+            quizItem.addActionListener(e -> {
+                if (!(currentFrame instanceof TeacherView)) {
+                    currentFrame.dispose();
+                    new TeacherView().setVisible(true);
+                }
+            });
+        } else {
+            // Menu de l'étudiant
+            JMenuItem quizItem = new JMenuItem("Quiz disponibles");
+            menu.add(quizItem);
+
+            quizItem.addActionListener(e -> {
+                if (!(currentFrame instanceof StudentView)) {
+                    currentFrame.dispose();
+                    new StudentView().setVisible(true);
+                }
+            });
+        }
 
         homeItem.addActionListener(e -> {
             if (!(currentFrame instanceof HomeView)) {
                 currentFrame.dispose();
                 new HomeView().setVisible(true);
-            }
-        });
-
-        questionItem.addActionListener(e -> {
-            if (!(currentFrame instanceof QuestionView)) {
-                currentFrame.dispose();
-                new QuestionView().setVisible(true);
-            }
-        });
-
-        quizItem.addActionListener(e -> {
-            if (!(currentFrame instanceof QuizView)) {
-                currentFrame.dispose();
-                new QuizView().setVisible(true);
-            }
-        });
-
-        answerItem.addActionListener(e -> {
-            if (!(currentFrame instanceof AnswerView)) {
-                currentFrame.dispose();
-                new AnswerView().setVisible(true);
             }
         });
     }
