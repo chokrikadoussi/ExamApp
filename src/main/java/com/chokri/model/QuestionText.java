@@ -1,15 +1,19 @@
 package com.chokri.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class QuestionText extends Question {
 
-    private final List<String> answers;
+    private List<String> answers;
 
-    public QuestionText(String title, String answersCSV) {
-        super(title);
+    public QuestionText() {
+        this.answers = new ArrayList<>();
+    }
+
+    public QuestionText(String title, String answersCSV, int points) {
+        super(title, points);
         this.answers = new ArrayList<>();
         setAnswersFromCSV(answersCSV);
     }
@@ -18,8 +22,16 @@ public class QuestionText extends Question {
         return new ArrayList<>(answers);
     }
 
+    public void setAnswers(List<String> answers) {
+        this.answers = new ArrayList<>(answers);
+    }
+
     public void setAnswersFromCSV(String answersCSV) {
-        answers.clear();
+        if (this.answers == null) {
+            this.answers = new ArrayList<>();
+        } else {
+            answers.clear();
+        }
         if (answersCSV != null && !answersCSV.trim().isEmpty()) {
             String[] answerArray = answersCSV.split(",");
             for (String answer : answerArray) {
@@ -31,7 +43,11 @@ public class QuestionText extends Question {
         }
     }
 
+    @JsonIgnore
     public String getAnswersAsCSV() {
+        if (answers == null || answers.isEmpty()) {
+            return "";
+        }
         return String.join(", ", answers);
     }
 

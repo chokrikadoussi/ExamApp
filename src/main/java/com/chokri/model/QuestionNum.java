@@ -5,14 +5,10 @@ public class QuestionNum extends Question {
     private double answer;
     private double marginOfError;
 
-    public QuestionNum(String title, double answer) {
-        super(title);
-        this.answer = answer;
-        this.marginOfError = 0; // Marge d'erreur par défaut
-    }
+    public QuestionNum() {}
 
-    public QuestionNum(String title, double answer, double marginOfError) {
-        super(title);
+    public QuestionNum(String title, double answer, double marginOfError, int points) {
+        super(title, points);
         this.answer = answer;
         this.marginOfError = marginOfError;
     }
@@ -36,24 +32,19 @@ public class QuestionNum extends Question {
 
     @Override
     public boolean checkAnswer(String userAnswer) {
-        if (userAnswer == null) {
-            return false;
-        }
         try {
-            double userProposition = Double.parseDouble(userAnswer);
-            //TODO: revoir la logique de comparaison avec la marge d'erreur
-            return (userProposition - this.marginOfError) <= this.answer;
-        } catch (Exception e) {
-            //TODO: log the exception
-            System.out.println("Erreur de format de nombre : " + e.getMessage());
+            double userValue = Double.parseDouble(userAnswer.trim());
+            return Math.abs(userValue - answer) <= marginOfError;
+        } catch (NumberFormatException e) {
             return false;
         }
     }
 
     @Override
     public String toString() {
-        return "Titre Question : " + this.getTitle() + '\'' +
-                " | Bonne Réponse : " + this.getAnswer() + '\'' +
-                " | Marge d'Erreur : " + this.getMarginOfError();
+        return "Question numérique: " + getTitle() +
+               " (Points: " + getPoints() +
+               ", Réponse: " + answer +
+               ", Marge d'erreur: ±" + marginOfError + ")";
     }
 }

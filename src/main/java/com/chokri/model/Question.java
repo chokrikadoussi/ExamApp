@@ -3,9 +3,14 @@ package com.chokri.model;
 public abstract class Question {
 
     private String title;
+    private int points; // Points pour cette question
 
-    public Question(String title) {
+    // Constructeurs vide pour désérialisation
+    public Question() {}
+
+    public Question(String title, int points) {
         this.title = title;
+        this.points = points;
     }
 
     public String getTitle() {
@@ -14,6 +19,14 @@ public abstract class Question {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
     }
 
     public abstract boolean checkAnswer(String userAnswer);
