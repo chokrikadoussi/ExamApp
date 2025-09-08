@@ -141,4 +141,34 @@ public class QuizView extends JFrame {
         timeLimitField.setText("");
         questionList.clearSelection();
     }
+
+    private JPanel createQuestionListPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        UITheme.setupPanel(panel);
+        GridBagConstraints gbc = UITheme.createGridBagConstraints();
+
+        // Titre
+        JLabel listLabel = new JLabel("Questions disponibles");
+        UITheme.setupHeader(listLabel);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(listLabel, gbc);
+
+        // Liste des questions
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        List<Question> questions = questionController.getQuestions();
+        for (Question question : questions) {
+            listModel.addElement(String.format("%s [%d pts]", question.getTitle(), question.getPoints()));
+        }
+
+        JList<String> questionList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(questionList);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+        gbc.gridy = 1;
+        panel.add(scrollPane, gbc);
+
+        return panel;
+    }
 }
