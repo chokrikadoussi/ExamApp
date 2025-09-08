@@ -1,26 +1,35 @@
 package com.chokri.controller;
 
 import com.chokri.model.Question;
+import com.chokri.model.Quiz;
+import com.chokri.service.GradingService;
 
 import java.util.Map;
 
 public class AnswerController {
-
-    private final QuestionController questionController;
+    private static AnswerController instance;
+    private final GradingService gradingService;
 
     public AnswerController() {
-        this.questionController = QuestionController.getInstance();
+        this.gradingService = GradingService.getInstance();
+    }
+
+    public static AnswerController getInstance() {
+        if (instance == null) {
+            instance = new AnswerController();
+        }
+        return instance;
     }
 
     public int validateAnswers(Map<Question, String> userAnswers) {
-        int score = 0;
-        for (Map.Entry<Question, String> entry : userAnswers.entrySet()) {
-            Question question = entry.getKey();
-            String userAnswer = entry.getValue();
-            if (question.checkAnswer(userAnswer)) {
-                score++;
-            }
-        }
-        return score;
+        return gradingService.calculateRawScore(userAnswers);
+    }
+
+    public double calculateQuizScore(Quiz quiz, Map<Question, String> userAnswers) {
+        return gradingService.calculateQuizScore(quiz, userAnswers);
+    }
+
+    public String getFormattedQuizResult(Quiz quiz, Map<Question, String> userAnswers) {
+        return gradingService.formatQuizResult(quiz, userAnswers);
     }
 }
