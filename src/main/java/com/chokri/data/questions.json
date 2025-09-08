@@ -1,0 +1,7 @@
+[ "java.util.ArrayList", [ {
+  "@class" : "com.chokri.model.QuestionNum",
+  "title" : "4+2=",
+  "points" : 2,
+  "answer" : 6.0,
+  "marginOfError" : 1.0
+} ] ]
