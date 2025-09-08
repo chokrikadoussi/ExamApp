@@ -23,8 +23,8 @@ public class QuestionController {
         return instance;
     }
 
-    public void createTextQuestion(String title, String answer) {
-        Question question = new QuestionText(title, answer);
+    public void createTextQuestion(String title, String answersCSV) {
+        Question question = new QuestionText(title, answersCSV);
         this.questions.add(question);
     }
 

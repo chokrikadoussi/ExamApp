@@ -1,34 +1,53 @@
 package com.chokri.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class QuestionText extends Question {
 
-    private String answer;
+    private final List<String> answers;
 
-    public QuestionText(String title, String answer) {
+    public QuestionText(String title, String answersCSV) {
         super(title);
-        this.answer = answer;
+        this.answers = new ArrayList<>();
+        setAnswersFromCSV(answersCSV);
     }
 
-    public String getAnswer() {
-        return this.answer;
+    public List<String> getAnswers() {
+        return new ArrayList<>(answers);
     }
 
-    public void setAnswer(String answer) {
-        this.answer = answer;
+    public void setAnswersFromCSV(String answersCSV) {
+        answers.clear();
+        if (answersCSV != null && !answersCSV.trim().isEmpty()) {
+            String[] answerArray = answersCSV.split(",");
+            for (String answer : answerArray) {
+                String trimmedAnswer = answer.trim();
+                if (!trimmedAnswer.isEmpty()) {
+                    answers.add(trimmedAnswer);
+                }
+            }
+        }
+    }
+
+    public String getAnswersAsCSV() {
+        return String.join(", ", answers);
     }
 
     @Override
     public boolean checkAnswer(String userAnswer) {
-        if (userAnswer == null) {
+        if (userAnswer == null || userAnswer.trim().isEmpty()) {
             return false;
         }
-        return this.answer.trim().equalsIgnoreCase(userAnswer.trim());
+        String trimmedUserAnswer = userAnswer.trim();
+        return answers.stream()
+                .anyMatch(answer -> answer.equalsIgnoreCase(trimmedUserAnswer));
     }
 
     @Override
     public String toString() {
         return "Titre Question : " + this.getTitle() + '\'' +
-                " | Bonne(s) Réponse(s) : '" + this.getAnswer();
+                " | Bonne(s) Réponse(s) : '" + getAnswersAsCSV() + "'";
     }
 }
-

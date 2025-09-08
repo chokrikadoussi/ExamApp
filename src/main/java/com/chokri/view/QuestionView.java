@@ -22,7 +22,6 @@ public class QuestionView extends JFrame {
 
         JPanel panel = new JPanel(new GridBagLayout());
         UITheme.setupPanel(panel);
-
         GridBagConstraints gbc = UITheme.createGridBagConstraints();
 
         // Header
@@ -71,7 +70,7 @@ public class QuestionView extends JFrame {
         panel.add(questionTitleField, gbc);
 
         // Answer
-        JLabel questionAnswerLabel = new JLabel("Réponse :");
+        JLabel questionAnswerLabel = new JLabel("Réponse(s) :");
         UITheme.setupLabel(questionAnswerLabel);
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -83,37 +82,50 @@ public class QuestionView extends JFrame {
         gbc.gridy = 3;
         panel.add(questionAnswerField, gbc);
 
-        // Error Margin
+        // Aide format CSV pour les réponses textuelles
+        JLabel csvHelpLabel = new JLabel("<html>Format: séparé par des virgules<br>Exemple: Paris, Londres, Madrid</html>");
+        csvHelpLabel.setForeground(UITheme.TEXT_COLOR);
+        csvHelpLabel.setFont(csvHelpLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        panel.add(csvHelpLabel, gbc);
+
+        // Error Margin (initially hidden)
         errorMarginLabel = new JLabel("Marge d'erreur :");
         UITheme.setupLabel(errorMarginLabel);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         panel.add(errorMarginLabel, gbc);
 
         errorMarginField = new JTextField();
         UITheme.setupTextField(errorMarginField);
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         panel.add(errorMarginField, gbc);
 
         errorMarginLabel.setVisible(false);
         errorMarginField.setVisible(false);
+        csvHelpLabel.setVisible(true);
 
-        // Radio button listeners
+        // Listeners pour afficher/masquer les champs appropriés
         textRadioButton.addActionListener(e -> {
             errorMarginLabel.setVisible(false);
             errorMarginField.setVisible(false);
+            csvHelpLabel.setVisible(true);
+            questionAnswerLabel.setText("Réponse(s) :");
         });
         numericRadioButton.addActionListener(e -> {
             errorMarginLabel.setVisible(true);
             errorMarginField.setVisible(true);
+            csvHelpLabel.setVisible(false);
+            questionAnswerLabel.setText("Réponse :");
         });
 
         // Create Button
         JButton createButton = new JButton("Créer");
         UITheme.setupButton(createButton);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(createButton, gbc);
@@ -127,10 +139,33 @@ public class QuestionView extends JFrame {
         String title = questionTitleField.getText();
         String answer = questionAnswerField.getText();
 
+        if (title.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Le titre de la question ne peut pas être vide.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (answer.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "La réponse ne peut pas être vide.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         if (textRadioButton.isSelected()) {
             questionController.createTextQuestion(title, answer);
         } else if (numericRadioButton.isSelected()) {
             String errorMargin = errorMarginField.getText();
+            if (errorMargin.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "La marge d'erreur ne peut pas être vide pour une question numérique.",
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             questionController.createNumericQuestion(title, answer, errorMargin);
         }
 
