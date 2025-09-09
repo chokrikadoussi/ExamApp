@@ -1,6 +1,7 @@
 package com.chokri.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface générique pour les opérations de persistance.
@@ -27,10 +28,30 @@ public interface IRepository<T> {
     List<T> findAll();
 
     /**
+     * Trouve une entité par son ID.
+     * @param id L'identifiant de l'entité
+     * @return Un Optional contenant l'entité si trouvée, Optional.empty() sinon
+     */
+    Optional<T> findById(String id);
+
+    /**
+     * Vérifie si une entité existe avec l'ID donné.
+     * @param id L'identifiant à vérifier
+     * @return true si l'entité existe, false sinon
+     */
+    boolean existsById(String id);
+
+    /**
      * Supprime une entité.
      * @param entity L'entité à supprimer
      */
     void delete(T entity);
+
+    /**
+     * Supprime une entité par son ID.
+     * @param id L'identifiant de l'entité à supprimer
+     */
+    void deleteById(String id);
 
     /**
      * Vide le repository.
