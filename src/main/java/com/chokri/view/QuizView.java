@@ -1,7 +1,6 @@
 package com.chokri.view;
 
-import com.chokri.controller.QuizController;
-import com.chokri.controller.QuestionController;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.model.Quiz;
 import com.chokri.model.Question;
 import com.chokri.utils.UITheme;
@@ -11,164 +10,173 @@ import java.awt.*;
 import java.util.List;
 
 public class QuizView extends JFrame {
-    private final QuizController quizController;
-    private final QuestionController questionController;
+    private final AppOrchestrator orchestrator;
     private final JTextField titleField;
     private final JTextField coefficientField;
     private final JTextField timeLimitField;
     private final JList<Question> questionList;
     private final DefaultListModel<Question> questionListModel;
 
-    public QuizView() {
-        this.quizController = QuizController.getInstance();
-        this.questionController = QuestionController.getInstance();
+    public QuizView(AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
 
         UITheme.setupFrame(this, "Créer un Quiz");
-        setJMenuBar(new MenuBar(this));
+        setJMenuBar(new MenuBar(this, orchestrator));
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         UITheme.setupPanel(mainPanel);
         GridBagConstraints gbc = UITheme.createGridBagConstraints();
 
         // Titre
-        JLabel titleLabel = new JLabel("Titre du Quiz :");
-        UITheme.setupLabel(titleLabel);
+        JLabel titleLabel = new JLabel("Créer un nouveau Quiz");
+        UITheme.setupTitle(titleLabel);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
         mainPanel.add(titleLabel, gbc);
 
-        titleField = new JTextField();
-        UITheme.setupTextField(titleField);
+        // Titre du quiz
+        gbc.gridwidth = 1;
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        JLabel titleFieldLabel = new JLabel("Titre du quiz :");
+        UITheme.setupLabel(titleFieldLabel);
+        mainPanel.add(titleFieldLabel, gbc);
+
         gbc.gridx = 1;
+        titleField = new JTextField(20);
+        UITheme.setupTextField(titleField);
         mainPanel.add(titleField, gbc);
 
         // Coefficient
-        JLabel coeffLabel = new JLabel("Coefficient :");
-        UITheme.setupLabel(coeffLabel);
+        gbc.gridy = 2;
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        mainPanel.add(coeffLabel, gbc);
+        JLabel coefficientLabel = new JLabel("Coefficient :");
+        UITheme.setupLabel(coefficientLabel);
+        mainPanel.add(coefficientLabel, gbc);
 
-        coefficientField = new JTextField();
-        UITheme.setupTextField(coefficientField);
         gbc.gridx = 1;
+        coefficientField = new JTextField(10);
+        UITheme.setupTextField(coefficientField);
+        coefficientField.setText("1.0");
         mainPanel.add(coefficientField, gbc);
 
         // Temps limite
-        JLabel timeLabel = new JLabel("Temps limite (minutes) :");
-        UITheme.setupLabel(timeLabel);
+        gbc.gridy = 3;
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(timeLabel, gbc);
+        JLabel timeLimitLabel = new JLabel("Temps limite (minutes) :");
+        UITheme.setupLabel(timeLimitLabel);
+        mainPanel.add(timeLimitLabel, gbc);
 
-        timeLimitField = new JTextField();
-        UITheme.setupTextField(timeLimitField);
         gbc.gridx = 1;
+        timeLimitField = new JTextField(10);
+        UITheme.setupTextField(timeLimitField);
+        timeLimitField.setText("30");
         mainPanel.add(timeLimitField, gbc);
 
         // Liste des questions disponibles
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         JLabel questionsLabel = new JLabel("Questions disponibles :");
         UITheme.setupHeader(questionsLabel);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
         mainPanel.add(questionsLabel, gbc);
 
+        // Liste avec modèle
         questionListModel = new DefaultListModel<>();
-        loadAvailableQuestions();
         questionList = new JList<>(questionListModel);
         questionList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JScrollPane scrollPane = new JScrollPane(questionList);
         scrollPane.setPreferredSize(new Dimension(400, 200));
-        gbc.gridy = 4;
+
+        gbc.gridy = 5;
         mainPanel.add(scrollPane, gbc);
 
-        // Bouton de création
-        JButton createButton = new JButton("Créer le Quiz");
-        UITheme.setupButton(createButton);
-        createButton.addActionListener(e -> createQuiz());
-        gbc.gridy = 5;
-        gbc.anchor = GridBagConstraints.CENTER;
-        mainPanel.add(createButton, gbc);
+        // Boutons
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(UITheme.SECONDARY_COLOR);
+
+        JButton refreshQuestionsButton = new JButton("Actualiser les questions");
+        UITheme.setupButton(refreshQuestionsButton);
+        refreshQuestionsButton.addActionListener(e -> loadQuestions());
+        buttonPanel.add(refreshQuestionsButton);
+
+        JButton createQuizButton = new JButton("Créer le Quiz");
+        UITheme.setupButton(createQuizButton);
+        createQuizButton.addActionListener(e -> createQuiz());
+        buttonPanel.add(createQuizButton);
+
+        gbc.gridy = 6;
+        mainPanel.add(buttonPanel, gbc);
 
         add(mainPanel);
         pack();
+
+        // Charger les questions au démarrage
+        loadQuestions();
     }
 
-    private void loadAvailableQuestions() {
-        List<Question> questions = questionController.getQuestions();
+    private void loadQuestions() {
         questionListModel.clear();
+        List<Question> questions = orchestrator.getAllQuestions();
         for (Question question : questions) {
             questionListModel.addElement(question);
         }
     }
 
     private void createQuiz() {
-        try {
-            String title = titleField.getText();
-            double coefficient = Double.parseDouble(coefficientField.getText());
-            int timeLimit = Integer.parseInt(timeLimitField.getText());
+        String title = titleField.getText().trim();
+        String coefficientText = coefficientField.getText().trim();
+        String timeLimitText = timeLimitField.getText().trim();
 
-            if (title.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Veuillez saisir un titre pour le quiz.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            Quiz quiz = quizController.createQuiz(title, coefficient);
-            quiz.setTimeLimit(timeLimit);
-
-            // Ajouter les questions sélectionnées
-            List<Question> selectedQuestions = questionList.getSelectedValuesList();
-            for (Question question : selectedQuestions) {
-                quizController.addQuestionToQuiz(quiz, question);
-            }
-
-            JOptionPane.showMessageDialog(this, "Quiz créé avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);
-            clearFields();
-
-        } catch (NumberFormatException e) {
+        if (title.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                "Veuillez saisir des valeurs numériques valides pour le coefficient et le temps limite.",
+                "Le titre du quiz ne peut pas être vide.",
                 "Erreur",
                 JOptionPane.ERROR_MESSAGE);
+            return;
         }
-    }
 
-    private void clearFields() {
+        double coefficient;
+        int timeLimit;
+
+        try {
+            coefficient = Double.parseDouble(coefficientText);
+            timeLimit = Integer.parseInt(timeLimitText);
+
+            if (coefficient <= 0 || timeLimit <= 0) {
+                throw new NumberFormatException("Les valeurs doivent être positives");
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                "Le coefficient et le temps limite doivent être des nombres positifs.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Créer le quiz via l'orchestrateur
+        Quiz quiz = orchestrator.createQuiz(title, coefficient);
+        quiz.setTimeLimit(timeLimit);
+
+        // Ajouter les questions sélectionnées
+        List<Question> selectedQuestions = questionList.getSelectedValuesList();
+        for (Question question : selectedQuestions) {
+            orchestrator.addQuestionToQuiz(quiz, question);
+        }
+
+        JOptionPane.showMessageDialog(this,
+            String.format("Quiz '%s' créé avec succès avec %d question(s)!",
+                title, selectedQuestions.size()),
+            "Succès",
+            JOptionPane.INFORMATION_MESSAGE);
+
+        // Réinitialiser le formulaire
         titleField.setText("");
-        coefficientField.setText("");
-        timeLimitField.setText("");
+        coefficientField.setText("1.0");
+        timeLimitField.setText("30");
         questionList.clearSelection();
-    }
-
-    private JPanel createQuestionListPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        UITheme.setupPanel(panel);
-        GridBagConstraints gbc = UITheme.createGridBagConstraints();
-
-        // Titre
-        JLabel listLabel = new JLabel("Questions disponibles");
-        UITheme.setupHeader(listLabel);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        panel.add(listLabel, gbc);
-
-        // Liste des questions
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        List<Question> questions = questionController.getQuestions();
-        for (Question question : questions) {
-            listModel.addElement(String.format("%s [%d pts]", question.getTitle(), question.getPoints()));
-        }
-
-        JList<String> questionList = new JList<>(listModel);
-        JScrollPane scrollPane = new JScrollPane(questionList);
-        scrollPane.setPreferredSize(new Dimension(400, 200));
-        gbc.gridy = 1;
-        panel.add(scrollPane, gbc);
-
-        return panel;
     }
 }
