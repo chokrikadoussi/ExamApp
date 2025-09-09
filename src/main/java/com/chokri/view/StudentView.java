@@ -1,12 +1,11 @@
 package com.chokri.view;
 
-import com.chokri.controller.QuizController;
+import com.chokri.component.AnswerPanel;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.model.Question;
-import com.chokri.model.QuestionQCM;
 import com.chokri.model.Quiz;
 import com.chokri.model.Submission;
 import com.chokri.utils.UITheme;
-import com.chokri.service.SubmissionService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,18 +15,16 @@ import java.util.Map;
 import java.util.Optional;
 
 public class StudentView extends JFrame {
-    private final QuizController quizController;
-    private final SubmissionService submissionService;
+    private final AppOrchestrator orchestrator;
     private final JPanel mainPanel;
     private final CardLayout cardLayout;
     private long quizStartTime;
 
-    public StudentView() {
-        this.quizController = QuizController.getInstance();
-        this.submissionService = SubmissionService.getInstance();
+    public StudentView(AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
 
         UITheme.setupFrame(this, "Espace Étudiant - Quiz disponibles");
-        setJMenuBar(new MenuBar(this));
+        setJMenuBar(new MenuBar(this, orchestrator));
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -54,8 +51,8 @@ public class StudentView extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(titleLabel, gbc);
 
-        // Liste des quiz publiés
-        List<Quiz> publishedQuizzes = quizController.getPublishedQuizzes();
+        // Liste des quiz publiés via l'orchestrateur
+        List<Quiz> publishedQuizzes = orchestrator.getPublishedQuizzes();
 
         if (publishedQuizzes.isEmpty()) {
             JLabel emptyLabel = new JLabel("Aucun quiz disponible pour le moment");
@@ -78,8 +75,8 @@ public class StudentView extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setBackground(UITheme.SECONDARY_COLOR);
 
-        // Vérifier si le quiz a déjà été complété
-        boolean isCompleted = submissionService.isQuizCompleted(quiz);
+        // Vérifier si le quiz a déjà été complété via l'orchestrateur
+        boolean isCompleted = orchestrator.isQuizCompleted(quiz);
 
         // Créer une étiquette avec une icône pour indiquer l'état
         String statusIcon = isCompleted ? "✓ " : "";
@@ -102,10 +99,10 @@ public class StudentView extends JFrame {
 
     private void showQuizQuestions(Quiz quiz, boolean readOnly) {
         if (readOnly) {
-            // Afficher les résultats précédents
-            Optional<Submission> latestSubmission = submissionService.getLatestSubmission(quiz);
+            // Afficher les résultats précédents via l'orchestrateur
+            Optional<Submission> latestSubmission = orchestrator.getLatestSubmission(quiz);
             latestSubmission.ifPresent(submission -> {
-                String resultMessage = submissionService.generateDetailedResults(submission);
+                String resultMessage = orchestrator.generateDetailedResults(submission);
 
                 JTextArea textArea = new JTextArea(resultMessage);
                 textArea.setEditable(false);
@@ -154,72 +151,20 @@ public class StudentView extends JFrame {
 
         quizPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // Panel principal pour les questions
-        JPanel questionsPanel = new JPanel(new GridBagLayout());
-        UITheme.setupPanel(questionsPanel);
-        gbc = UITheme.createGridBagConstraints();
-
-        // Map pour stocker les réponses
-        Map<Question, Object> answerComponents = new HashMap<>();
-
-        int row = 0;
-        for (Question question : quiz.getQuestions()) {
-            gbc.gridx = 0;
-            gbc.gridy = row;
-            gbc.gridwidth = 2;
-
-            // Afficher le titre et les points de la question
-            JLabel questionLabel = new JLabel(String.format("%s [%d pts]",
-                question.getTitle(), question.getPoints()));
-            UITheme.setupHeader(questionLabel);
-            questionsPanel.add(questionLabel, gbc);
-            row++;
-
-            if (question instanceof QuestionQCM) {
-                QuestionQCM qcm = (QuestionQCM) question;
-                // Création du groupe de boutons radio pour le QCM
-                ButtonGroup group = new ButtonGroup();
-                JPanel optionsPanel = createQCMOptionsPanel(qcm, group);
-
-                gbc.gridy = row;
-                questionsPanel.add(optionsPanel, gbc);
-                answerComponents.put(question, group);
-            } else {
-                JLabel answerLabel = new JLabel("Votre réponse :");
-                UITheme.setupLabel(answerLabel);
-                gbc.gridx = 0;
-                gbc.gridy = row;
-                gbc.gridwidth = 1;
-                questionsPanel.add(answerLabel, gbc);
-
-                JTextField answerField = new JTextField();
-                UITheme.setupTextField(answerField);
-                gbc.gridx = 1;
-                questionsPanel.add(answerField, gbc);
-                answerComponents.put(question, answerField);
-            }
-
-            row++;
-            // Ajouter un espace entre les questions
-            gbc.gridy = row++;
-            questionsPanel.add(Box.createVerticalStrut(20), gbc);
-        }
-
-        // Ajouter le panneau des questions avec défilement
-        JScrollPane scrollPane = new JScrollPane(questionsPanel);
+        // Utilisation du composant AnswerPanel
+        AnswerPanel answerPanel = new AnswerPanel(quiz.getQuestions());
+        JScrollPane scrollPane = new JScrollPane(answerPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         quizPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Panel pour les boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         buttonPanel.setBackground(UITheme.SECONDARY_COLOR);
 
         if (!readOnly) {
-            // Bouton de validation
             JButton validateButton = new JButton("Valider les réponses");
             UITheme.setupButton(validateButton);
-            validateButton.addActionListener(e -> validateQuiz(quiz, answerComponents));
+            validateButton.addActionListener(e -> validateQuiz(quiz, answerPanel.getAnswerComponents()));
             buttonPanel.add(validateButton);
         }
 
@@ -227,38 +172,17 @@ public class StudentView extends JFrame {
         JButton backButton = new JButton("Retour à la liste des quiz");
         UITheme.setupButton(backButton);
         backButton.addActionListener(e -> {
-            // Nettoyer les composants avant de retourner à la liste
-            answerComponents.clear();
+            answerPanel.getAnswerComponents().clear();
             mainPanel.remove(quizPanel);
             cardLayout.show(mainPanel, "QUIZ_LIST");
         });
         buttonPanel.add(backButton);
 
         quizPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Ajouter le panel au mainPanel
         mainPanel.add(quizPanel, "QUIZ_" + quiz.getTitle());
         cardLayout.show(mainPanel, "QUIZ_" + quiz.getTitle());
     }
 
-    private JPanel createQCMOptionsPanel(QuestionQCM qcm, ButtonGroup group) {
-        JPanel optionsPanel = new JPanel(new GridBagLayout());
-        optionsPanel.setBackground(UITheme.SECONDARY_COLOR);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(2, 20, 2, 2);
-
-        List<String> options = qcm.getOptions();
-        for (int i = 0; i < options.size(); i++) {
-            JRadioButton radioButton = new JRadioButton(options.get(i));
-            radioButton.setBackground(UITheme.SECONDARY_COLOR);
-            group.add(radioButton);
-            gbc.gridy = i;
-            optionsPanel.add(radioButton, gbc);
-        }
-
-        return optionsPanel;
-    }
 
     private void disableAllComponents(Container container) {
         Component[] components = container.getComponents();
@@ -306,9 +230,9 @@ public class StudentView extends JFrame {
             }
         }
 
-        // Soumettre le quiz et obtenir les résultats détaillés
-        Submission submission = submissionService.submitQuiz(quiz, userAnswers, timeSpentMinutes);
-        String resultMessage = submissionService.generateDetailedResults(submission);
+        // Soumettre le quiz via l'orchestrateur
+        Submission submission = orchestrator.submitQuiz(quiz, userAnswers, timeSpentMinutes);
+        String resultMessage = orchestrator.generateDetailedResults(submission);
 
         // Afficher les résultats dans une boîte de dialogue personnalisée avec défilement
         JTextArea textArea = new JTextArea(resultMessage);

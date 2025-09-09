@@ -1,6 +1,6 @@
 package com.chokri.view;
 
-import com.chokri.controller.QuizController;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.model.Quiz;
 import com.chokri.utils.UITheme;
 
@@ -9,14 +9,14 @@ import java.awt.*;
 import java.util.List;
 
 public class TeacherView extends JFrame {
-    private final QuizController quizController;
+    private final AppOrchestrator orchestrator;
     private final DefaultListModel<Quiz> quizListModel;
 
-    public TeacherView() {
-        this.quizController = QuizController.getInstance();
+    public TeacherView(AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
 
         UITheme.setupFrame(this, "Espace Enseignant");
-        setJMenuBar(new MenuBar(this));
+        setJMenuBar(new MenuBar(this, orchestrator));
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         UITheme.setupPanel(mainPanel);
@@ -70,9 +70,14 @@ public class TeacherView extends JFrame {
         UITheme.setupButton(deleteButton);
         deleteButton.addActionListener(e -> deleteSelectedQuiz(quizList.getSelectedValue()));
 
+        JButton refreshButton = new JButton("Actualiser");
+        UITheme.setupButton(refreshButton);
+        refreshButton.addActionListener(e -> loadQuizzes());
+
         actionPanel.add(publishButton);
         actionPanel.add(editButton);
         actionPanel.add(deleteButton);
+        actionPanel.add(refreshButton);
 
         gbc.gridy = 4;
         mainPanel.add(actionPanel, gbc);
@@ -83,20 +88,29 @@ public class TeacherView extends JFrame {
 
     private void loadQuizzes() {
         quizListModel.clear();
-        List<Quiz> quizzes = quizController.getAllQuizzes();
+        List<Quiz> quizzes = orchestrator.getAllQuizzes();
         for (Quiz quiz : quizzes) {
             quizListModel.addElement(quiz);
         }
     }
 
     private void openQuizCreation() {
-        new QuizView().setVisible(true);
+        new QuizView(orchestrator).setVisible(true);
         dispose();
     }
 
     private void publishSelectedQuiz(Quiz quiz) {
         if (quiz != null) {
-            quizController.publishQuiz(quiz);
+            // Vérifier si le quiz peut être publié via l'orchestrateur
+            if (!orchestrator.canPublishQuiz(quiz)) {
+                JOptionPane.showMessageDialog(this,
+                    "Ce quiz ne peut pas être publié. Vérifiez qu'il contient des questions et un temps limite valide.",
+                    "Publication impossible",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            orchestrator.publishQuiz(quiz);
             JOptionPane.showMessageDialog(this,
                 "Le quiz a été publié avec succès !",
                 "Publication",
@@ -117,13 +131,30 @@ public class TeacherView extends JFrame {
 
     private void deleteSelectedQuiz(Quiz quiz) {
         if (quiz != null) {
+            // Afficher les statistiques du quiz avant suppression
+            AppOrchestrator.QuizStatistics stats = orchestrator.calculateQuizStatistics(quiz);
+            String message = String.format(
+                "Êtes-vous sûr de vouloir supprimer ce quiz ?\n\n" +
+                "Statistiques:\n" +
+                "- Soumissions totales: %d\n" +
+                "- Score moyen: %.2f\n\n" +
+                "Cette action est irréversible.",
+                stats.getTotalSubmissions(),
+                stats.getAverageScore()
+            );
+
             int response = JOptionPane.showConfirmDialog(this,
-                "Êtes-vous sûr de vouloir supprimer ce quiz ?",
-                "Confirmation",
-                JOptionPane.YES_NO_OPTION);
+                message,
+                "Confirmation de suppression",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
-                quizController.deleteQuiz(quiz);
+                orchestrator.deleteQuiz(quiz);
+                JOptionPane.showMessageDialog(this,
+                    "Quiz supprimé avec succès.",
+                    "Suppression",
+                    JOptionPane.INFORMATION_MESSAGE);
                 loadQuizzes(); // Rafraîchir la liste
             }
         }
@@ -141,9 +172,17 @@ public class TeacherView extends JFrame {
             if (value instanceof Quiz quiz) {
                 String status = quiz.isPublished() ? "[Publié] " : "[Brouillon] ";
                 setText(status + quiz.getTitle() +
-                    String.format(" (Coefficient: %.1f, Temps: %d min)",
+                    String.format(" (Coefficient: %.1f, Questions: %d, Temps: %d min)",
                         quiz.getCoefficient(),
+                        quiz.getQuestionCount(),
                         quiz.getTimeLimit()));
+
+                // Couleur différente selon le statut
+                if (quiz.isPublished()) {
+                    setForeground(isSelected ? Color.WHITE : new Color(0, 128, 0));
+                } else {
+                    setForeground(isSelected ? Color.WHITE : Color.DARK_GRAY);
+                }
             }
 
             return this;

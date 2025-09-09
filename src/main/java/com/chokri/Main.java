@@ -1,11 +1,20 @@
 package com.chokri;
 
+import com.chokri.config.AppConfig;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.view.HomeView;
 
 import javax.swing.*;
 
+/**
+ * Point d'entrée principal de l'application ExamApp.
+ * Initialise le système de dependency injection avant de lancer l'interface.
+ */
 public class Main {
     public static void main(String[] args) {
+        // Initialiser le système de dependency injection
+        AppConfig.configure();
+
         try {
             // Configuration du Look and Feel Nimbus pour une apparence moderne
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -26,8 +35,17 @@ public class Main {
 
         // Lancement de l'interface graphique sur l'EDT
         SwingUtilities.invokeLater(() -> {
-            HomeView homeView = new HomeView();
-            homeView.setVisible(true);
+            try {
+                // Créer l'orchestrateur principal
+                AppOrchestrator orchestrator = new AppOrchestrator();
+
+                // Lancer la vue principale avec l'orchestrateur
+                new HomeView(orchestrator).setVisible(true);
+
+            } catch (Exception e) {
+                System.err.println("Erreur lors du démarrage de l'application : " + e.getMessage());
+                e.printStackTrace();
+            }
         });
     }
 }

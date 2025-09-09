@@ -1,5 +1,6 @@
 package com.chokri.view;
 
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.utils.UITheme;
 import com.chokri.utils.SessionManager;
 import com.chokri.model.UserRole;
@@ -7,8 +8,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class HomeView extends JFrame {
+    private final AppOrchestrator orchestrator;
 
-    public HomeView() {
+    public HomeView(AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+
         UITheme.setupFrame(this, "Accueil");
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -40,7 +44,7 @@ public class HomeView extends JFrame {
         UITheme.setupButton(studentButton);
         studentButton.addActionListener(e -> {
             SessionManager.getInstance().setCurrentRole(UserRole.STUDENT);
-            new StudentView().setVisible(true);
+            new StudentView(orchestrator).setVisible(true);
             dispose();
         });
 
@@ -49,7 +53,7 @@ public class HomeView extends JFrame {
         UITheme.setupButton(teacherButton);
         teacherButton.addActionListener(e -> {
             SessionManager.getInstance().setCurrentRole(UserRole.TEACHER);
-            new TeacherView().setVisible(true);
+            new TeacherView(orchestrator).setVisible(true);
             dispose();
         });
 

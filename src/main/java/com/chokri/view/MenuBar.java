@@ -1,11 +1,15 @@
 package com.chokri.view;
 
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.utils.SessionManager;
 import javax.swing.*;
 
 public class MenuBar extends JMenuBar {
+    private final AppOrchestrator orchestrator;
 
-    public MenuBar(JFrame currentFrame) {
+    public MenuBar(JFrame currentFrame, AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+
         JMenu menu = new JMenu("Navigation");
         add(menu);
 
@@ -23,14 +27,14 @@ public class MenuBar extends JMenuBar {
             questionItem.addActionListener(e -> {
                 if (!(currentFrame instanceof QuestionView)) {
                     currentFrame.dispose();
-                    new QuestionView().setVisible(true);
+                    new QuestionView(orchestrator).setVisible(true);
                 }
             });
 
             quizItem.addActionListener(e -> {
                 if (!(currentFrame instanceof TeacherView)) {
                     currentFrame.dispose();
-                    new TeacherView().setVisible(true);
+                    new TeacherView(orchestrator).setVisible(true);
                 }
             });
         } else {
@@ -41,7 +45,7 @@ public class MenuBar extends JMenuBar {
             quizItem.addActionListener(e -> {
                 if (!(currentFrame instanceof StudentView)) {
                     currentFrame.dispose();
-                    new StudentView().setVisible(true);
+                    new StudentView(orchestrator).setVisible(true);
                 }
             });
         }
@@ -49,7 +53,7 @@ public class MenuBar extends JMenuBar {
         homeItem.addActionListener(e -> {
             if (!(currentFrame instanceof HomeView)) {
                 currentFrame.dispose();
-                new HomeView().setVisible(true);
+                new HomeView(orchestrator).setVisible(true);
             }
         });
     }
