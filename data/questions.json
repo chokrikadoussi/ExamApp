@@ -1,0 +1,27 @@
+[
+  {
+    "type": "numeric",
+    "id": "question-1",
+    "title": "4+2=",
+    "points": 2,
+    "answer": 6.0,
+    "marginOfError": 1.0
+  },
+  {
+    "type": "qcm",
+    "id": "question-2",
+    "title": "Capitale de France",
+    "points": 1,
+    "options": ["Madrid", "Londres", "Paris"],
+    "correctOptionIndex": 2
+  },
+  {
+    "type": "qcm",
+    "id": "question-3",
+    "title": "Combien de côté a un carré ?",
+    "points": 10,
+    "options": ["4", "5", "6"],
+    "correctOptionIndex": 0
+  }
+]
+

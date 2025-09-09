@@ -1,0 +1,24 @@
+[ {
+  "id" : "733eabab-9f94-4f91-a021-eb0b9cb1070e",
+  "title" : "cc1",
+  "coefficient" : 5.0,
+  "questions" : [ {
+    "type" : "numeric",
+    "id" : "question-1",
+    "title" : "4+2=",
+    "points" : 2,
+    "answer" : 6.0,
+    "marginOfError" : 1.0
+  }, {
+    "type" : "qcm",
+    "id" : "question-2",
+    "title" : "Capitale de France",
+    "points" : 1,
+    "options" : [ "Madrid", "Londres", "Paris" ],
+    "correctOptionIndex" : 2
+  } ],
+  "timeLimit" : 20,
+  "published" : true,
+  "questionCount" : 2,
+  "maxScore" : 3.0
+} ]
