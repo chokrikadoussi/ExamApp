@@ -1,6 +1,6 @@
 package com.chokri.view;
 
-import com.chokri.controller.AnswerController;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.model.Question;
 import com.chokri.model.QuestionQCM;
 import com.chokri.utils.UITheme;
@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 public class AnswerView extends JFrame {
-    private final AnswerController answerController;
+    private final AppOrchestrator orchestrator;
     private final Map<Question, Object> answerComponents; // Peut contenir JTextField ou ButtonGroup
     private final List<Question> questions;
 
     // Constructeur pour une fenêtre standalone
-    public AnswerView(List<Question> questions) {
+    public AnswerView(List<Question> questions, AppOrchestrator orchestrator) {
         this.questions = questions;
-        this.answerController = new AnswerController();
+        this.orchestrator = orchestrator;
         this.answerComponents = new HashMap<>();
         initialize();
     }
@@ -84,7 +84,7 @@ public class AnswerView extends JFrame {
 
     private void initialize() {
         UITheme.setupFrame(this, "Répondre aux questions");
-        setJMenuBar(new MenuBar(this));
+        setJMenuBar(new MenuBar(this, orchestrator));
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         UITheme.setupPanel(mainPanel);
@@ -204,7 +204,7 @@ public class AnswerView extends JFrame {
             }
         }
 
-        int score = answerController.validateAnswers(userAnswers);
+        int score = orchestrator.validateAnswers(userAnswers);
         int total = questions.size();
         JOptionPane.showMessageDialog(this,
                 String.format("Votre score est de : %d/%d", score, total),

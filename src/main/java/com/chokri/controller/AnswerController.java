@@ -6,19 +6,16 @@ import com.chokri.service.GradingService;
 
 import java.util.Map;
 
+/**
+ * Contrôleur gérant les réponses et l'évaluation.
+ * Utilise l'injection de dépendances au lieu du pattern singleton.
+ */
 public class AnswerController {
-    private static AnswerController instance;
     private final GradingService gradingService;
 
-    public AnswerController() {
-        this.gradingService = GradingService.getInstance();
-    }
-
-    public static AnswerController getInstance() {
-        if (instance == null) {
-            instance = new AnswerController();
-        }
-        return instance;
+    // Injection de dépendances via constructeur
+    public AnswerController(GradingService gradingService) {
+        this.gradingService = gradingService;
     }
 
     public int validateAnswers(Map<Question, String> userAnswers) {
