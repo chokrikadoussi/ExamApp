@@ -41,7 +41,7 @@ public class Submission {
         this.answersByQuestionId = new HashMap<>(answersByQuestionId);
     }
 
-    // Méthodes de compatibilité avec l'ancien code - ignorées par Jackson
+    // Méthodes de compatibilité avec l'ancien code — ignorées par Jackson
     @JsonIgnore
     public void setAnswers(Map<Question, String> answers) {
         this.answersByQuestionId.clear();
