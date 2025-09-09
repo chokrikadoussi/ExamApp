@@ -1,27 +1,20 @@
 package com.chokri.controller;
 
 import com.chokri.model.Question;
-import com.chokri.service.IQuestionService;
 import com.chokri.service.QuestionService;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Contrôleur gérant les interactions avec les questions.
- * Utilise l'interface IQuestionService pour respecter le principe d'inversion de dépendance.
+ * Contrôleur gérant les questions.
+ * Utilise l'injection de dépendances au lieu du pattern singleton.
  */
 public class QuestionController {
-    private static QuestionController instance;
-    private final IQuestionService questionService;
+    private final QuestionService questionService;
 
-    private QuestionController() {
-        this.questionService = QuestionService.getInstance();
-    }
-
-    public static QuestionController getInstance() {
-        if (instance == null) {
-            instance = new QuestionController();
-        }
-        return instance;
+    // Injection de dépendances via constructeur
+    public QuestionController(QuestionService questionService) {
+        this.questionService = questionService;
     }
 
     /**
@@ -48,11 +41,11 @@ public class QuestionController {
      */
     public Question createNumericQuestion(String title, String answer, String errorMargin, int points) {
         try {
-            double answerValue = Double.parseDouble(answer);
-            double marginValue = Double.parseDouble(errorMargin);
-            return questionService.createNumericQuestion(title, answerValue, marginValue, points);
+            double numericAnswer = Double.parseDouble(answer);
+            double numericErrorMargin = Double.parseDouble(errorMargin);
+            return questionService.createNumericQuestion(title, numericAnswer, numericErrorMargin, points);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Les valeurs numériques sont invalides", e);
+            throw new IllegalArgumentException("Format numérique invalide", e);
         }
     }
 
@@ -74,8 +67,38 @@ public class QuestionController {
      *
      * @return La liste de toutes les questions
      */
-    public List<Question> getQuestions() {
+    public List<Question> getAllQuestions() {
         return questionService.getAllQuestions();
+    }
+
+    /**
+     * Récupère une question par son identifiant.
+     *
+     * @param id L'identifiant de la question
+     * @return La question correspondante, s'elle existe
+     */
+    public Optional<Question> getQuestionById(String id) {
+        return questionService.getQuestionById(id);
+    }
+
+    /**
+     * Vérifie si une question existe.
+     *
+     * @param id L'identifiant de la question
+     * @return true si la question existe, false sinon
+     */
+    public boolean questionExists(String id) {
+        return questionService.questionExists(id);
+    }
+
+    /**
+     * Met à jour une question.
+     *
+     * @param question La question à mettre à jour
+     * @return La question mise à jour
+     */
+    public Question updateQuestion(Question question) {
+        return questionService.updateQuestion(question);
     }
 
     /**
@@ -85,5 +108,25 @@ public class QuestionController {
      */
     public void deleteQuestion(Question question) {
         questionService.deleteQuestion(question);
+    }
+
+    /**
+     * Supprime une question par son identifiant.
+     *
+     * @param id L'identifiant de la question à supprimer
+     */
+    public void deleteQuestionById(String id) {
+        questionService.deleteQuestionById(id);
+    }
+
+    /**
+     * Valide la réponse d'un utilisateur à une question.
+     *
+     * @param question La question posée
+     * @param userAnswer La réponse de l'utilisateur
+     * @return true si la réponse est correcte, false sinon
+     */
+    public boolean validateAnswer(Question question, String userAnswer) {
+        return questionService.validateAnswer(question, userAnswer);
     }
 }

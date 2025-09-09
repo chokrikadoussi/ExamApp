@@ -1,6 +1,6 @@
 package com.chokri.view;
 
-import com.chokri.controller.QuestionController;
+import com.chokri.controller.AppOrchestrator;
 import com.chokri.utils.UITheme;
 
 import javax.swing.*;
@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuestionView extends JFrame {
-    private final QuestionController questionController;
+    private final AppOrchestrator orchestrator;
     private final JTextField questionTitleField;
     private final JTextField questionAnswerField;
     private final JTextField errorMarginField;
-    private final JTextField pointsField; // Nouveau champ pour les points
+    private final JTextField pointsField;
     private final JLabel errorMarginLabel;
     private final JRadioButton textRadioButton;
     private final JRadioButton numericRadioButton;
@@ -25,13 +25,13 @@ public class QuestionView extends JFrame {
     private final ButtonGroup qcmAnswerGroup;
     private final JPanel qcmOptionsPanel;
 
-    public QuestionView() {
-        questionController = QuestionController.getInstance();
+    public QuestionView(AppOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
         qcmOptions = new ArrayList<>();
         qcmAnswerGroup = new ButtonGroup();
 
         UITheme.setupFrame(this, "Créer une question");
-        setJMenuBar(new MenuBar(this));
+        setJMenuBar(new MenuBar(this, orchestrator));
 
         JPanel panel = new JPanel(new GridBagLayout());
         UITheme.setupPanel(panel);
@@ -49,158 +49,132 @@ public class QuestionView extends JFrame {
         // Question Type
         JLabel typeLabel = new JLabel("Type :");
         UITheme.setupLabel(typeLabel);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridy = 1;
+        gbc.gridx = 0;
         panel.add(typeLabel, gbc);
 
-        textRadioButton = new JRadioButton("Texte", true);
+        JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        typePanel.setBackground(UITheme.SECONDARY_COLOR);
+
+        textRadioButton = new JRadioButton("Textuelle");
         numericRadioButton = new JRadioButton("Numérique");
         qcmRadioButton = new JRadioButton("QCM");
+
         ButtonGroup typeGroup = new ButtonGroup();
         typeGroup.add(textRadioButton);
         typeGroup.add(numericRadioButton);
         typeGroup.add(qcmRadioButton);
+        textRadioButton.setSelected(true);
 
-        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        radioPanel.setBackground(UITheme.SECONDARY_COLOR);
-        radioPanel.add(textRadioButton);
-        radioPanel.add(numericRadioButton);
-        radioPanel.add(qcmRadioButton);
+        typePanel.add(textRadioButton);
+        typePanel.add(numericRadioButton);
+        typePanel.add(qcmRadioButton);
+
         gbc.gridx = 1;
-        gbc.gridy = 1;
-        panel.add(radioPanel, gbc);
+        panel.add(typePanel, gbc);
 
-        // Points field
-        JLabel pointsLabel = new JLabel("Points :");
-        UITheme.setupLabel(pointsLabel);
-        gbc.gridx = 0;
+        // Titre de la question
+        JLabel titleLabel = new JLabel("Titre :");
+        UITheme.setupLabel(titleLabel);
         gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        panel.add(pointsLabel, gbc);
-
-        pointsField = new JTextField("1"); // Valeur par défaut : 1 point
-        UITheme.setupTextField(pointsField);
-        gbc.gridx = 1;
-        panel.add(pointsField, gbc);
-
-        // Title field (décalé d'une ligne)
-        JLabel questionTitleLabel = new JLabel("Titre :");
-        UITheme.setupLabel(questionTitleLabel);
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(questionTitleLabel, gbc);
+        panel.add(titleLabel, gbc);
 
-        questionTitleField = new JTextField();
+        questionTitleField = new JTextField(20);
         UITheme.setupTextField(questionTitleField);
         gbc.gridx = 1;
         panel.add(questionTitleField, gbc);
 
-        // Panneau pour réponse textuelle/numérique
-        JPanel standardAnswerPanel = new JPanel(new GridBagLayout());
-        standardAnswerPanel.setBackground(UITheme.SECONDARY_COLOR);
-
-        // Answer
-        JLabel questionAnswerLabel = new JLabel("Réponse(s) :");
-        UITheme.setupLabel(questionAnswerLabel);
+        // Points
+        JLabel pointsLabel = new JLabel("Points :");
+        UITheme.setupLabel(pointsLabel);
+        gbc.gridy = 3;
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        standardAnswerPanel.add(questionAnswerLabel, gbc);
+        panel.add(pointsLabel, gbc);
 
-        questionAnswerField = new JTextField();
+        pointsField = new JTextField(5);
+        UITheme.setupTextField(pointsField);
+        pointsField.setText("1");
+        gbc.gridx = 1;
+        panel.add(pointsField, gbc);
+
+        // Réponse/Marge d'erreur (pour textuelle et numérique)
+        JLabel answerLabel = new JLabel("Réponse :");
+        UITheme.setupLabel(answerLabel);
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        panel.add(answerLabel, gbc);
+
+        questionAnswerField = new JTextField(20);
         UITheme.setupTextField(questionAnswerField);
         gbc.gridx = 1;
-        standardAnswerPanel.add(questionAnswerField, gbc);
+        panel.add(questionAnswerField, gbc);
 
-        // Error Margin
+        // Marge d'erreur (seulement pour numérique)
         errorMarginLabel = new JLabel("Marge d'erreur :");
         UITheme.setupLabel(errorMarginLabel);
+        gbc.gridy = 5;
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        standardAnswerPanel.add(errorMarginLabel, gbc);
+        panel.add(errorMarginLabel, gbc);
 
-        errorMarginField = new JTextField();
+        errorMarginField = new JTextField(10);
         UITheme.setupTextField(errorMarginField);
+        errorMarginField.setText("0.1");
         gbc.gridx = 1;
-        standardAnswerPanel.add(errorMarginField, gbc);
+        panel.add(errorMarginField, gbc);
 
-        // Aide format CSV
-        JLabel csvHelpLabel = new JLabel("<html>Format: séparé par des virgules<br>Exemple: Paris, Londres, Madrid</html>");
-        csvHelpLabel.setForeground(UITheme.TEXT_COLOR);
-        csvHelpLabel.setFont(csvHelpLabel.getFont().deriveFont(Font.ITALIC, 11f));
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        standardAnswerPanel.add(csvHelpLabel, gbc);
-
-        // Panneau QCM
+        // Panel QCM
         qcmPanel = new JPanel(new GridBagLayout());
         qcmPanel.setBackground(UITheme.SECONDARY_COLOR);
+        qcmPanel.setBorder(BorderFactory.createTitledBorder("Options QCM"));
 
         qcmOptionsPanel = new JPanel(new GridBagLayout());
         qcmOptionsPanel.setBackground(UITheme.SECONDARY_COLOR);
 
-        JButton addOptionButton = new JButton("Ajouter une option");
+        JButton addOptionButton = new JButton("Ajouter option");
         UITheme.setupButton(addOptionButton);
         addOptionButton.addActionListener(e -> addQCMOption());
 
+        GridBagConstraints qcmGbc = new GridBagConstraints();
+        qcmGbc.gridx = 0;
+        qcmGbc.gridy = 0;
+        qcmGbc.gridwidth = 2;
+        qcmGbc.fill = GridBagConstraints.HORIZONTAL;
+        qcmPanel.add(qcmOptionsPanel, qcmGbc);
+
+        qcmGbc.gridy = 1;
+        qcmGbc.gridwidth = 1;
+        qcmPanel.add(addOptionButton, qcmGbc);
+
+        gbc.gridy = 6;
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        qcmPanel.add(new JLabel("Options du QCM :"), gbc);
-
-        gbc.gridy = 1;
-        qcmPanel.add(qcmOptionsPanel, gbc);
-
-        gbc.gridy = 2;
-        qcmPanel.add(addOptionButton, gbc);
-
-        // Ajouter les panneaux au panel principal
-        gbc.gridx = 0;
-        gbc.gridy = 3;
         gbc.gridwidth = 2;
-        panel.add(standardAnswerPanel, gbc);
         panel.add(qcmPanel, gbc);
-        qcmPanel.setVisible(false);
 
-        // Create Button
-        JButton createButton = new JButton("Créer");
+        // Ajouter les deux premières options par défaut
+        addQCMOption();
+        addQCMOption();
+
+        // Action listeners pour gérer l'affichage selon le type
+        textRadioButton.addActionListener(e -> updateFieldsVisibility());
+        numericRadioButton.addActionListener(e -> updateFieldsVisibility());
+        qcmRadioButton.addActionListener(e -> updateFieldsVisibility());
+
+        // Bouton créer
+        JButton createButton = new JButton("Créer la question");
         UITheme.setupButton(createButton);
-        gbc.gridx = 0;
-        gbc.gridy = 4;
+        createButton.addActionListener(e -> createQuestion());
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(createButton, gbc);
 
-        createButton.addActionListener(e -> createQuestion());
-
-        // Listeners pour gérer la visibilité des panneaux
-        textRadioButton.addActionListener(e -> {
-            standardAnswerPanel.setVisible(true);
-            qcmPanel.setVisible(false);
-            errorMarginLabel.setVisible(false);
-            errorMarginField.setVisible(false);
-            csvHelpLabel.setVisible(true);
-            questionAnswerLabel.setText("Réponse(s) :");
-            pack();
-        });
-
-        numericRadioButton.addActionListener(e -> {
-            standardAnswerPanel.setVisible(true);
-            qcmPanel.setVisible(false);
-            errorMarginLabel.setVisible(true);
-            errorMarginField.setVisible(true);
-            csvHelpLabel.setVisible(false);
-            questionAnswerLabel.setText("Réponse :");
-            pack();
-        });
-
-        qcmRadioButton.addActionListener(e -> {
-            standardAnswerPanel.setVisible(false);
-            qcmPanel.setVisible(true);
-            pack();
-        });
-
         add(panel);
         pack();
+
+        // Initialiser l'affichage
+        updateFieldsVisibility();
     }
 
     private void addQCMOption() {
@@ -226,6 +200,18 @@ public class QuestionView extends JFrame {
         qcmOptionsPanel.add(optionPanel, gbc);
         pack();
         revalidate();
+    }
+
+    private void updateFieldsVisibility() {
+        boolean isNumeric = numericRadioButton.isSelected();
+        boolean isQCM = qcmRadioButton.isSelected();
+
+        errorMarginLabel.setVisible(isNumeric);
+        errorMarginField.setVisible(isNumeric);
+        qcmPanel.setVisible(isQCM);
+        questionAnswerField.setVisible(!isQCM);
+
+        pack();
     }
 
     private void createQuestion() {
@@ -262,7 +248,7 @@ public class QuestionView extends JFrame {
                         "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                questionController.createTextQuestion(title, answer, points);
+                orchestrator.createTextQuestion(title, answer, points);
             }
             else if (numericRadioButton.isSelected()) {
                 String answer = questionAnswerField.getText();
@@ -273,7 +259,10 @@ public class QuestionView extends JFrame {
                         "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                questionController.createNumericQuestion(title, answer, errorMargin, points);
+                // Valider les valeurs numériques
+                Double.parseDouble(answer);
+                Double.parseDouble(errorMargin);
+                orchestrator.createNumericQuestion(title, answer, errorMargin, points);
             }
             else if (qcmRadioButton.isSelected()) {
                 if (qcmOptions.size() < 2) {
@@ -295,7 +284,14 @@ public class QuestionView extends JFrame {
 
                         for (Component c : optionComponents) {
                             if (c instanceof JTextField) {
-                                options[currentIndex] = ((JTextField) c).getText().trim();
+                                String optionText = ((JTextField) c).getText().trim();
+                                if (optionText.isEmpty()) {
+                                    JOptionPane.showMessageDialog(this,
+                                        "Toutes les options doivent être remplies.",
+                                        "Erreur", JOptionPane.ERROR_MESSAGE);
+                                    return;
+                                }
+                                options[currentIndex] = optionText;
                             } else if (c instanceof JRadioButton && ((JRadioButton) c).isSelected()) {
                                 selectedIndex = currentIndex;
                             }
@@ -312,17 +308,21 @@ public class QuestionView extends JFrame {
                     return;
                 }
 
-                questionController.createQCMQuestion(title, options, selectedIndex, points);
+                orchestrator.createQCMQuestion(title, options, selectedIndex, points);
             }
 
             // Clear all fields
             questionTitleField.setText("");
             questionAnswerField.setText("");
             errorMarginField.setText("");
-            pointsField.setText("1"); // Réinitialiser à 1 point
+            pointsField.setText("1");
             clearQCMOptions();
 
             JOptionPane.showMessageDialog(this, "Question créée avec succès !");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                "Format numérique invalide.",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Erreur lors de la création de la question : " + e.getMessage(),
@@ -335,6 +335,8 @@ public class QuestionView extends JFrame {
         qcmOptionsPanel.removeAll();
         qcmOptions.clear();
         qcmAnswerGroup.clearSelection();
+        addQCMOption();
+        addQCMOption();
         pack();
         revalidate();
     }

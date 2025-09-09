@@ -5,28 +5,20 @@ import com.chokri.model.QuestionNum;
 import com.chokri.model.QuestionQCM;
 import com.chokri.model.QuestionText;
 import com.chokri.repository.IRepository;
-import com.chokri.repository.QuestionJacksonRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service gérant les questions dans l'application.
- * Implémente l'interface IQuestionService pour respecter le principe d'inversion de dépendance.
- * Utilise un repository Jackson pour la persistance des données.
+ * Utilise l'injection de dépendances au lieu du pattern singleton.
  */
 public class QuestionService implements IQuestionService {
-    private static QuestionService instance;
     private final IRepository<Question> questionRepository;
 
-    private QuestionService() {
-        this.questionRepository = new QuestionJacksonRepository();
-    }
-
-    public static QuestionService getInstance() {
-        if (instance == null) {
-            instance = new QuestionService();
-        }
-        return instance;
+    // Injection de dépendances via constructeur
+    public QuestionService(IRepository<Question> questionRepository) {
+        this.questionRepository = questionRepository;
     }
 
     @Override
@@ -53,9 +45,34 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
+    public Optional<Question> getQuestionById(String id) {
+        return questionRepository.findById(id);
+    }
+
+    @Override
+    public boolean questionExists(String id) {
+        return questionRepository.existsById(id);
+    }
+
+    @Override
+    public Question updateQuestion(Question question) {
+        if (question == null || question.getId() == null) {
+            throw new IllegalArgumentException("La question et son ID ne peuvent pas être null");
+        }
+        return questionRepository.save(question);
+    }
+
+    @Override
     public void deleteQuestion(Question question) {
-        if (question != null) {
-            questionRepository.delete(question);
+        if (question != null && question.getId() != null) {
+            questionRepository.deleteById(question.getId());
+        }
+    }
+
+    @Override
+    public void deleteQuestionById(String id) {
+        if (id != null) {
+            questionRepository.deleteById(id);
         }
     }
 
