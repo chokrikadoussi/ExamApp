@@ -1,9 +1,12 @@
 package com.chokri.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QuestionQCM extends Question {
     private List<String> options;
     private int correctOptionIndex;
@@ -43,8 +46,21 @@ public class QuestionQCM extends Question {
         }
     }
 
+    @JsonIgnore
     public String getCorrectAnswer() {
         return options.get(correctOptionIndex);
+    }
+
+    @JsonIgnore
+    public String getFormattedOptions() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < options.size(); i++) {
+            sb.append(i).append(". ").append(options.get(i));
+            if (i < options.size() - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
 
     @Override
@@ -64,18 +80,6 @@ public class QuestionQCM extends Question {
           .append(" (Points: ").append(getPoints()).append(")\n");
         for (int i = 0; i < options.size(); i++) {
             sb.append(i).append(". ").append(options.get(i)).append("\n");
-        }
-        return sb.toString();
-    }
-
-    // Méthode utilitaire pour formater les options pour l'affichage
-    public String getFormattedOptions() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < options.size(); i++) {
-            sb.append(i).append(". ").append(options.get(i));
-            if (i < options.size() - 1) {
-                sb.append("\n");
-            }
         }
         return sb.toString();
     }
