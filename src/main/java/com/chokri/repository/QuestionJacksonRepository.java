@@ -1,57 +1,49 @@
 package com.chokri.repository;
 
+import com.chokri.config.DataPathConfig;
 import com.chokri.model.Question;
-import com.chokri.model.QuestionNum;
-import com.chokri.model.QuestionQCM;
-import com.chokri.model.QuestionText;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Implémentation de IRepository pour les questions utilisant Jackson pour la persistance JSON.
  * Cette classe offre des fonctionnalités de persistance optimisées grâce à Jackson.
  */
 public class QuestionJacksonRepository implements IRepository<Question> {
-    private static final String QUESTIONS_FILE = "src/main/java/com/chokri/data/questions.json";
     private final ObjectMapper objectMapper;
+    private final Path questionsFilePath;
 
     public QuestionJacksonRepository() {
-        // Configuration de l'ObjectMapper pour gérer le polymorphisme
+        // Configuration de l'ObjectMapper avec support des dates Java 8+
         this.objectMapper = new ObjectMapper();
-
-        // Activer l'indentation pour un JSON plus lisible
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        // Configuration du polymorphisme avec la méthode moderne (non dépréciée)
-        this.objectMapper.activateDefaultTyping(
-                this.objectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
+        // Utilisation de la configuration centralisée des chemins
+        this.questionsFilePath = DataPathConfig.getQuestionsFilePath();
 
-        // Enregistrement des sous-types pour le polymorphisme
-        this.objectMapper.registerSubtypes(
-                new NamedType(QuestionText.class, "text"),
-                new NamedType(QuestionQCM.class, "qcm"),
-                new NamedType(QuestionNum.class, "numeric")
-        );
+        // Assurer que le répertoire de données existe
+        DataPathConfig.ensureDataDirectoryExists();
 
         // Créer le fichier s'il n'existe pas
-        File file = new File(QUESTIONS_FILE);
+        File file = questionsFilePath.toFile();
         if (!file.exists()) {
             try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-                // Écrire un tableau vide si le fichier est nouveau
-                objectMapper.writeValue(file, new ArrayList<Question>());
+                boolean created = file.createNewFile();
+                if (created) {
+                    // Écrire un tableau vide si le fichier est nouveau
+                    objectMapper.writeValue(file, new ArrayList<Question>());
+                }
             } catch (IOException e) {
                 System.err.println("Erreur lors de la création du fichier questions.json : " + e.getMessage());
             }
@@ -61,10 +53,10 @@ public class QuestionJacksonRepository implements IRepository<Question> {
     @Override
     public Question save(Question entity) {
         List<Question> questions = findAll();
-        // Vérifie si la question existe déjà (mise à jour)
+        // Vérifie si la question existe déjà par ID (mise à jour)
         boolean updated = false;
         for (int i = 0; i < questions.size(); i++) {
-            if (questions.get(i).getTitle().equals(entity.getTitle())) {
+            if (questions.get(i).getId().equals(entity.getId())) {
                 questions.set(i, entity);
                 updated = true;
                 break;
@@ -83,7 +75,7 @@ public class QuestionJacksonRepository implements IRepository<Question> {
     @Override
     public void saveAll(List<Question> entities) {
         try {
-            objectMapper.writeValue(new File(QUESTIONS_FILE), entities);
+            objectMapper.writeValue(questionsFilePath.toFile(), entities);
         } catch (IOException e) {
             System.err.println("Erreur lors de la sauvegarde des questions : " + e.getMessage());
         }
@@ -92,7 +84,7 @@ public class QuestionJacksonRepository implements IRepository<Question> {
     @Override
     public List<Question> findAll() {
         List<Question> questions = new ArrayList<>();
-        File file = new File(QUESTIONS_FILE);
+        File file = questionsFilePath.toFile();
 
         if (file.exists() && file.length() > 0) {
             try {
@@ -117,16 +109,44 @@ public class QuestionJacksonRepository implements IRepository<Question> {
     @Override
     public void delete(Question entity) {
         List<Question> questions = findAll();
-        questions.removeIf(q -> q.getTitle().equals(entity.getTitle()));
+        questions.removeIf(q -> q.getId().equals(entity.getId()));
         saveAll(questions);
     }
 
     @Override
     public void deleteAll() {
         try {
-            objectMapper.writeValue(new File(QUESTIONS_FILE), new ArrayList<Question>());
+            objectMapper.writeValue(questionsFilePath.toFile(), new ArrayList<Question>());
         } catch (IOException e) {
             System.err.println("Erreur lors de la suppression de toutes les questions : " + e.getMessage());
         }
+    }
+
+    @Override
+    public Optional<Question> findById(String id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+
+        List<Question> questions = findAll();
+        return questions.stream()
+                .filter(q -> id.equals(q.getId()))
+                .findFirst();
+    }
+
+    @Override
+    public boolean existsById(String id) {
+        return findById(id).isPresent();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        if (id == null) {
+            return;
+        }
+
+        List<Question> questions = findAll();
+        questions.removeIf(q -> id.equals(q.getId()));
+        saveAll(questions);
     }
 }
