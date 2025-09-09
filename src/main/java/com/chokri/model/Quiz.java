@@ -1,16 +1,29 @@
 package com.chokri.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Quiz {
+    private String id;
     private String title;
     private double coefficient;
     private List<Question> questions;
     private int timeLimit; // en minutes
     private boolean isPublished;
 
+    // Constructeur vide pour désérialisation
+    public Quiz() {
+        this.id = UUID.randomUUID().toString();
+        this.questions = new ArrayList<>();
+        this.isPublished = false;
+    }
+
     public Quiz(String title, double coefficient) {
+        this.id = UUID.randomUUID().toString();
         this.title = title;
         this.coefficient = coefficient;
         this.questions = new ArrayList<>();
@@ -18,6 +31,14 @@ public class Quiz {
     }
 
     // Getters et Setters
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -38,6 +59,10 @@ public class Quiz {
         return questions;
     }
 
+    public void setQuestions(List<Question> questions) {
+        this.questions = questions != null ? questions : new ArrayList<>();
+    }
+
     public int getTimeLimit() {
         return timeLimit;
     }
@@ -56,11 +81,15 @@ public class Quiz {
 
     // Méthodes de gestion des questions
     public void addQuestion(Question question) {
-        questions.add(question);
+        if (question != null) {
+            questions.add(question);
+        }
     }
 
     public void removeQuestion(Question question) {
-        questions.remove(question);
+        if (question != null) {
+            questions.remove(question);
+        }
     }
 
     public int getQuestionCount() {
@@ -69,6 +98,27 @@ public class Quiz {
 
     // Méthode pour calculer le score total possible
     public double getMaxScore() {
-        return questions.size() * coefficient;
+        return questions.stream()
+            .mapToInt(Question::getPoints)
+            .sum();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Quiz quiz = (Quiz) o;
+        return Objects.equals(id, quiz.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Quiz{id='%s', title='%s', coefficient=%.1f, questions=%d, published=%b}",
+                           id, title, coefficient, questions.size(), isPublished);
     }
 }
