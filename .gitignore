@@ -37,3 +37,14 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Fichiers de données générés par l'application
+# Les fichiers .json.sample peuvent être versionnés comme exemples
+data/*.json
+
+# Conserver la structure du répertoire
+!data/.gitkeep
+
+# Fichiers temporaires et de sauvegarde
+data/*.bak
+data/*.tmp
